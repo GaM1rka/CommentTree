@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CommentTree</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <h1>CommentTree</h1>
+          <p>Древовидные комментарии с поиском, сортировкой и пагинацией</p>
+        </div>
+        <a class="docs-link" href="http://localhost:8080/swagger" target="_blank" rel="noreferrer">Swagger</a>
+      </header>
+
+      <section class="controls" aria-label="Фильтры комментариев">
+        <form id="search-form" class="search-form">
+          <label class="field field-wide">
+            <span>Поиск</span>
+            <input id="search-input" type="search" placeholder="Ключевые слова или автор" />
+          </label>
+          <button type="submit">Найти</button>
+          <button id="reset-search" type="button" class="secondary">Сбросить</button>
+        </form>
+
+        <div class="filters">
+          <label class="field">
+            <span>Сортировка</span>
+            <select id="sort-select">
+              <option value="created_at">Дата</option>
+              <option value="author">Автор</option>
+              <option value="text">Текст</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Порядок</span>
+            <select id="order-select">
+              <option value="desc">Сначала новые</option>
+              <option value="asc">Сначала старые</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>На странице</span>
+            <select id="limit-select">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="composer" aria-label="Новый комментарий">
+        <h2>Новый комментарий</h2>
+        <form id="root-form" class="comment-form">
+          <input name="author" type="text" placeholder="Ваше имя" maxlength="80" required />
+          <textarea name="text" rows="3" placeholder="Текст комментария" required></textarea>
+          <button type="submit">Опубликовать</button>
+        </form>
+      </section>
+
+      <section class="status-row">
+        <p id="status" role="status"></p>
+        <div class="pagination">
+          <button id="prev-page" type="button" class="secondary">Назад</button>
+          <span id="page-label">1 / 1</span>
+          <button id="next-page" type="button" class="secondary">Вперед</button>
+        </div>
+      </section>
+
+      <section id="comments" class="comments" aria-label="Дерево комментариев"></section>
+    </main>
+
+    <template id="comment-template">
+      <article class="comment">
+        <div class="comment-body">
+          <div class="comment-meta">
+            <strong class="comment-author"></strong>
+            <time class="comment-date"></time>
+          </div>
+          <p class="comment-text"></p>
+          <div class="comment-actions">
+            <button type="button" class="reply-button secondary">Ответить</button>
+            <button type="button" class="delete-button danger">Удалить</button>
+          </div>
+          <form class="comment-form reply-form hidden">
+            <input name="author" type="text" placeholder="Ваше имя" maxlength="80" required />
+            <textarea name="text" rows="2" placeholder="Ваш ответ" required></textarea>
+            <div class="inline-actions">
+              <button type="submit">Отправить</button>
+              <button type="button" class="cancel-reply secondary">Отмена</button>
+            </div>
+          </form>
+        </div>
+        <div class="children"></div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
