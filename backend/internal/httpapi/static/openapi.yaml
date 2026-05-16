@@ -1,0 +1,221 @@
+openapi: 3.0.3
+info:
+  title: CommentTree API
+  version: 1.0.0
+  description: HTTP API for creating, reading, deleting, sorting, paginating and searching tree comments.
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /comments:
+    post:
+      summary: Create a comment
+      tags: [Comments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentRequest"
+            examples:
+              root:
+                summary: Root comment
+                value:
+                  author: Alice
+                  text: First comment
+              reply:
+                summary: Reply comment
+                value:
+                  parentId: 1
+                  author: Bob
+                  text: I agree
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    get:
+      summary: Get a comment tree
+      description: Returns root comments or the children of a selected parent with nested descendants.
+      tags: [Comments]
+      parameters:
+        - name: parent
+          in: query
+          description: Parent comment id. Omit it to read top-level comments.
+          schema:
+            type: integer
+            minimum: 1
+        - name: q
+          in: query
+          description: Full-text search query across author and text. Matching root subtrees are returned.
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created_at, author, text]
+            default: created_at
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: Paginated comment tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentTreePage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /comments/{id}:
+    delete:
+      summary: Delete a comment subtree
+      tags: [Comments]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Comment subtree deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted:
+                    type: integer
+                    example: 3
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Comment not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    CreateCommentRequest:
+      type: object
+      required: [author, text]
+      properties:
+        parentId:
+          type: integer
+          minimum: 1
+          nullable: true
+        author:
+          type: string
+          minLength: 1
+          example: Alice
+        text:
+          type: string
+          minLength: 1
+          example: This is a comment
+    Comment:
+      type: object
+      required: [id, author, text, createdAt]
+      properties:
+        id:
+          type: integer
+          example: 1
+        parentId:
+          type: integer
+          nullable: true
+          example: 1
+        author:
+          type: string
+          example: Alice
+        text:
+          type: string
+          example: This is a comment
+        createdAt:
+          type: string
+          format: date-time
+    CommentNode:
+      allOf:
+        - $ref: "#/components/schemas/Comment"
+        - type: object
+          required: [children]
+          properties:
+            children:
+              type: array
+              items:
+                $ref: "#/components/schemas/CommentNode"
+    CommentTreePage:
+      type: object
+      required: [items, page, limit, total, totalPages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentNode"
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 2
+        totalPages:
+          type: integer
+          example: 1
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: validation error: text is required
